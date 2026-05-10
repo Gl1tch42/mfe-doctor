@@ -1,0 +1,51 @@
+{
+  "name": "mfe-doctor",
+  "version": "0.1.0",
+  "description": "Detect Module Federation misconfigurations before they hit production",
+  "keywords": ["module-federation", "webpack", "micro-frontend", "architecture", "linter"],
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "bin": {
+    "mfe-doctor": "./dist/cli.js"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write .",
+    "dev": "vitest"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.25.0",
+    "@babel/traverse": "^7.25.0",
+    "cac": "^7.0.0",
+    "picocolors": "^1.0.0",
+    "semver": "^7.5.4",
+    "tinyglobby": "^0.2.16"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "@typescript-eslint/eslint-plugin": "^8.59.2",
+    "@typescript-eslint/parser": "^8.59.2",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.0.0",
+    "tsup": "^7.1.0",
+    "typescript": "^5.6.0",
+    "vitest": "^1.6.0"
+  }
+}

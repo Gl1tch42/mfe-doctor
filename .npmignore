@@ -1,0 +1,6 @@
+src/
+tests/
+.github/
+.vscode/
+*.log
+*.tsbuildinfo
