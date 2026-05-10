@@ -1,3 +1,4 @@
+import semver from 'semver';
 import type { Issue } from '../core/types';
 import type { Rule, RuleContext } from './rule-interface';
 
@@ -22,14 +23,41 @@ function getPackageVersions(packageJsons: RuleContext['packageJsons'], packageNa
 
 function hasVersionMismatch(versions: string[]): boolean {
   if (versions.length <= 1) return false;
-  const firstVersion = versions[0];
-  return versions.some(version => version !== firstVersion);
+
+  // Try to find a common version that satisfies all ranges
+  const uniqueVersions = [...new Set(versions)];
+
+  if (uniqueVersions.length === 1) return false;
+
+  // Check if all versions are compatible via semver
+  try {
+    const parsedVersions = uniqueVersions.map(v => semver.validRange(v)).filter(Boolean);
+    if (parsedVersions.length !== uniqueVersions.length) {
+      // Some versions are not valid ranges, fall back to string comparison
+      return true;
+    }
+
+    // Check if there's an intersection between all ranges
+    const intersection = parsedVersions.reduce((acc, range) => {
+      if (!acc) return range;
+      return semver.intersects(acc, range) ? semver.intersects(acc, range) : null;
+    });
+
+    return !intersection;
+  } catch {
+    // Fallback to string comparison if semver fails
+    return true;
+  }
 }
 
 const rule: Rule = {
   id: 'version-mismatch',
+  meta: {
+    name: 'Version Mismatch',
+    description: 'Detects shared packages with conflicting versions across package.json files',
+    category: 'dependency',
+  },
   severity: 'error',
-  description: 'Detects shared packages with conflicting versions across provided package.json files.',
   async check(context: RuleContext): Promise<Issue[]> {
     if (context.packageJsons.length <= 1) {
       return [];
@@ -46,7 +74,7 @@ const rule: Rule = {
             severity: rule.severity,
             message: `Shared package '${shared.packageName}' has conflicting versions: ${versions.join(', ')}.`,
             file: config.filePath,
-            suggestion: `Ensure all package.json files specify the same version for '${shared.packageName}' or use a compatible range.`,
+            suggestion: `Ensure all package.json files specify compatible versions for '${shared.packageName}'.`,
             context: {
               packageName: shared.packageName,
               versions,

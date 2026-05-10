@@ -5,8 +5,12 @@ import type { Rule, RuleContext } from './rule-interface';
 
 const rule: Rule = {
   id: 'expose-invalid-path',
+  meta: {
+    name: 'Invalid Expose Path',
+    description: 'Detects exposes that point to nonexistent files',
+    category: 'configuration',
+  },
   severity: 'error',
-  description: 'Detects exposes that point to nonexistent files.',
   async check(context: RuleContext): Promise<Issue[]> {
     const issues: Issue[] = [];
 
