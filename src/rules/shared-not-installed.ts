@@ -24,8 +24,12 @@ function getInstalledPackages(packageJsons: RuleContext['packageJsons']): Set<st
 
 const rule: Rule = {
   id: 'shared-not-installed',
+  meta: {
+    name: 'Shared Not Installed',
+    description: 'Detects shared packages declared in Module Federation configs but missing from package.json.',
+    category: 'dependency',
+  },
   severity: 'error',
-  description: 'Detects shared packages declared in Module Federation configs but missing from package.json.',
   async check(context: RuleContext): Promise<Issue[]> {
     if (context.packageJsons.length === 0) {
       return [];

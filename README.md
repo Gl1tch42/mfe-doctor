@@ -87,6 +87,35 @@ if (report.summary.errors > 0) {
 }
 ```
 
+### Custom Rules
+
+Extend mfe-doctor with your own rules:
+
+```ts
+import { analyze, ruleRegistry } from 'mfe-doctor';
+
+const customRule = {
+  id: 'my-custom-rule',
+  meta: {
+    name: 'My Custom Rule',
+    description: 'Validates team-specific conventions',
+    category: 'architecture',
+  },
+  severity: 'warning',
+  check: async (context) => {
+    // Your validation logic
+    return [];
+  },
+};
+
+ruleRegistry.register(customRule);
+
+const report = await analyze({
+  configs: ['./apps/**/webpack.config.js'],
+  packageJsons: ['./apps/**/package.json']
+});
+```
+
 ## Rules
 
 | Rule | Severity | Description |

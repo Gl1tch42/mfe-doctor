@@ -6,10 +6,7 @@ import { ruleRegistry } from './rule-interface';
 
 const IGNORE_FILES = new Set(['index.js', 'index.ts', 'rule-interface.js', 'rule-interface.ts']);
 
-export async function loadRules(): Promise<Rule[]> {
-  // Clear existing rules
-  ruleRegistry.clear();
-
+export async function loadBuiltinRules(): Promise<Rule[]> {
   const currentFilePath = typeof __dirname !== 'undefined'
     ? __dirname
     : typeof import.meta !== 'undefined' && typeof import.meta.url === 'string' && import.meta.url.startsWith('file://')
@@ -25,27 +22,56 @@ export async function loadRules(): Promise<Rule[]> {
     return (isJs || isTs) && !IGNORE_FILES.has(file);
   });
 
+  const rules: Rule[] = [];
+
   for (const file of ruleFiles) {
     const fullPath = path.join(rulesDir, file);
     const importSource = process.env.VITEST ? fullPath : pathToFileURL(fullPath).href;
     try {
       const module = await import(importSource);
       const rule = module?.default;
-
       if (rule && typeof rule.id === 'string' && typeof rule.check === 'function') {
-        ruleRegistry.register(rule as Rule);
+        rules.push(rule as Rule);
       }
     } catch (error) {
-      // Skip files that can't be loaded
       console.warn(`Failed to load rule from ${file}:`, error);
     }
   }
 
-  return ruleRegistry.list();
+  return rules;
+}
+
+export async function loadRulesFromDir(dir: string): Promise<Rule[]> {
+  let entries: string[];
+  try {
+    entries = await fs.readdir(dir);
+  } catch {
+    throw new Error(`Rules directory not found: ${dir}`);
+  }
+
+  const ruleFiles = entries.filter((file) => file.endsWith('.js') || file.endsWith('.mjs') || file.endsWith('.cjs'));
+  const rules: Rule[] = [];
+
+  for (const file of ruleFiles) {
+    const fullPath = path.join(dir, file);
+    try {
+      const module = await import(pathToFileURL(fullPath).href);
+      const rule = module?.default;
+      if (rule && typeof rule.id === 'string' && typeof rule.check === 'function') {
+        rules.push(rule as Rule);
+      } else {
+        console.warn(`File ${file} does not export a valid rule (missing id or check)`);
+      }
+    } catch (error) {
+      console.warn(`Failed to load custom rule from ${file}:`, error);
+    }
+  }
+
+  return rules;
 }
 
 export async function getRuleIds(): Promise<string[]> {
-  const rules = await loadRules();
+  const rules = await loadBuiltinRules();
   return rules.map((rule) => rule.id);
 }
 

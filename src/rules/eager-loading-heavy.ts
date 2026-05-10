@@ -3,8 +3,12 @@ import type { Rule, RuleContext } from './rule-interface';
 
 const rule: Rule = {
   id: 'eager-loading-heavy',
+  meta: {
+    name: 'Eager Loading Heavy',
+    description: 'Detects shared packages marked as eager, which can increase initial bundle size and slow startup',
+    category: 'performance',
+  },
   severity: 'warning',
-  description: 'Detects shared packages marked as eager, which can increase initial bundle size and slow startup.',
   async check(context: RuleContext): Promise<Issue[]> {
     const issues: Issue[] = [];
 

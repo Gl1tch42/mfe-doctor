@@ -23,8 +23,12 @@ function hasSingletonInconsistency(values: boolean[]): boolean {
 
 const rule: Rule = {
   id: 'singleton-inconsistent',
+  meta: {
+    name: 'Singleton Inconsistent',
+    description: 'Detects shared packages with inconsistent singleton configurations across Module Federation configs.',
+    category: 'configuration',
+  },
   severity: 'warning',
-  description: 'Detects shared packages with inconsistent singleton configurations across Module Federation configs.',
   async check(context: RuleContext): Promise<Issue[]> {
     const issues: Issue[] = [];
     const processedPackages = new Set<string>();

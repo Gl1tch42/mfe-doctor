@@ -31,21 +31,21 @@ function hasVersionMismatch(versions: string[]): boolean {
 
   // Check if all versions are compatible via semver
   try {
-    const parsedVersions = uniqueVersions.map(v => semver.validRange(v)).filter(Boolean);
+    const parsedVersions = uniqueVersions.map(v => semver.validRange(v)).filter((v): v is string => v !== null);
     if (parsedVersions.length !== uniqueVersions.length) {
-      // Some versions are not valid ranges, fall back to string comparison
       return true;
     }
 
-    // Check if there's an intersection between all ranges
-    const intersection = parsedVersions.reduce((acc, range) => {
-      if (!acc) return range;
-      return semver.intersects(acc, range) ? semver.intersects(acc, range) : null;
-    });
+    for (let i = 0; i < parsedVersions.length; i++) {
+      for (let j = i + 1; j < parsedVersions.length; j++) {
+        if (!semver.intersects(parsedVersions[i], parsedVersions[j])) {
+          return true;
+        }
+      }
+    }
 
-    return !intersection;
+    return false;
   } catch {
-    // Fallback to string comparison if semver fails
     return true;
   }
 }

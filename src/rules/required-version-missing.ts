@@ -19,8 +19,12 @@ function resolvePackageVersion(packageJsons: RuleContext['packageJsons'], packag
 
 const rule: Rule = {
   id: 'required-version-missing',
+  meta: {
+    name: 'Required Version Missing',
+    description: 'Detects shared packages without requiredVersion and without a version derivable from package.json.',
+    category: 'dependency',
+  },
   severity: 'warning',
-  description: 'Detects shared packages without requiredVersion and without a version derivable from package.json.',
   async check(context: RuleContext): Promise<Issue[]> {
     const issues: Issue[] = [];
 

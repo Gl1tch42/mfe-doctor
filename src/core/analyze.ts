@@ -1,18 +1,21 @@
 import { readFile } from 'node:fs/promises';
 import { glob } from 'tinyglobby';
 import type { Issue, PackageJson, ParsedConfig, Report } from './types';
+import type { Rule } from '../rules/rule-interface';
+import { ruleRegistry } from '../rules/rule-interface';
 import { parseWebpackConfig } from './parser';
 import { buildFederationGraph } from './graph';
-import { loadRules } from '../rules';
+import { loadBuiltinRules } from '../rules';
 
 export interface AnalyzeOptions {
   configs: string[];
   packageJsons?: string[];
-  rules?: Record<string, unknown>;
+  ruleOptions?: Record<string, unknown>;
+  extraRules?: Rule[];
+  disable?: string[];
 }
 
 export async function analyze(options: AnalyzeOptions): Promise<Report> {
-  // Expand globs for configs
   const configPaths: string[] = [];
   for (const pattern of options.configs) {
     if (pattern.includes('*') || pattern.includes('{') || pattern.includes('}')) {
@@ -28,7 +31,6 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
     configs.push(await parseWebpackConfig(configPath));
   }
 
-  // Expand globs for packageJsons
   const packageJsonPaths: string[] = [];
   if (options.packageJsons) {
     for (const pattern of options.packageJsons) {
@@ -52,15 +54,22 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
   }
 
   const graph = buildFederationGraph(configs);
-  const rules = await loadRules();
+
+  const disabled = new Set(options.disable ?? []);
+  const builtins = await loadBuiltinRules();
+  const allRules: Rule[] = [
+    ...builtins,
+    ...ruleRegistry.list(),
+    ...(options.extraRules ?? []),
+  ].filter((rule) => !disabled.has(rule.id));
 
   const issues: Issue[] = [];
-  for (const rule of rules) {
+  for (const rule of allRules) {
     const context = {
       graph,
       configs,
       packageJsons,
-      options: options.rules?.[rule.id] as Record<string, unknown> | undefined,
+      options: options.ruleOptions?.[rule.id] as Record<string, unknown> | undefined,
     };
     const result = await rule.check(context);
     issues.push(...result);

@@ -2,7 +2,13 @@
   "name": "mfe-doctor",
   "version": "0.1.0",
   "description": "Detect Module Federation misconfigurations before they hit production",
-  "keywords": ["module-federation", "webpack", "micro-frontend", "architecture", "linter"],
+  "keywords": [
+    "module-federation",
+    "webpack",
+    "micro-frontend",
+    "architecture",
+    "linter"
+  ],
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,7 +24,11 @@
   "bin": {
     "mfe-doctor": "./dist/cli.js"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=18"
   },
@@ -39,6 +49,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.2",
+    "@types/semver": "^7.7.1",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
     "eslint": "^10.3.0",
