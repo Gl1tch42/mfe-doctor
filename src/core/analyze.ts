@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { glob } from 'tinyglobby';
 import type { Issue, PackageJson, ParsedConfig, Report } from './types';
 import { parseWebpackConfig } from './parser';
 import { buildFederationGraph } from './graph';
@@ -11,14 +12,37 @@ export interface AnalyzeOptions {
 }
 
 export async function analyze(options: AnalyzeOptions): Promise<Report> {
-  const configs: ParsedConfig[] = [];
+  // Expand globs for configs
+  const configPaths: string[] = [];
+  for (const pattern of options.configs) {
+    if (pattern.includes('*') || pattern.includes('{') || pattern.includes('}')) {
+      const matches = await glob(pattern, { cwd: process.cwd() });
+      configPaths.push(...matches);
+    } else {
+      configPaths.push(pattern);
+    }
+  }
 
-  for (const configPath of options.configs) {
+  const configs: ParsedConfig[] = [];
+  for (const configPath of configPaths) {
     configs.push(await parseWebpackConfig(configPath));
   }
 
+  // Expand globs for packageJsons
+  const packageJsonPaths: string[] = [];
+  if (options.packageJsons) {
+    for (const pattern of options.packageJsons) {
+      if (pattern.includes('*') || pattern.includes('{') || pattern.includes('}')) {
+        const matches = await glob(pattern, { cwd: process.cwd() });
+        packageJsonPaths.push(...matches);
+      } else {
+        packageJsonPaths.push(pattern);
+      }
+    }
+  }
+
   const packageJsons: PackageJson[] = [];
-  for (const packageJsonPath of options.packageJsons ?? []) {
+  for (const packageJsonPath of packageJsonPaths) {
     const raw = await readFile(packageJsonPath, 'utf8');
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     packageJsons.push({

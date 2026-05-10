@@ -42,7 +42,7 @@ npx mfe-doctor ci
 ## CLI options
 
 ```bash
-mfe-doctor analyze [--html] [--json]
+mfe-doctor analyze [--json] [--html]
 mfe-doctor ci [--max-warnings <n>] [--format <junit|gh>]
 mfe-doctor --help
 mfe-doctor --version
@@ -50,12 +50,12 @@ mfe-doctor --version
 
 ### Behavior
 
-- `analyze`: analyzes found or configured webpack configs and prints issues.
-- `--html`: produces `report.html` with a self-contained graph and issue list.
+- `analyze`: analyzes found webpack configs and package.json files.
 - `--json`: prints a structured JSON report.
+- `--html`: prints a self-contained HTML report.
 - `ci`: exits with non-zero status when errors are present.
-- `--max-warnings`: configures warning threshold for CI.
-- `--format junit`: outputs JUnit XML.
+- `--max-warnings`: configures warning threshold for CI (default: 0).
+- `--format junit`: outputs JUnit XML (default for CI).
 - `--format gh`: outputs GitHub Actions annotations.
 
 ## Programmatic API
@@ -66,9 +66,6 @@ import { analyze } from 'mfe-doctor';
 const report = await analyze({
   configs: ['./host/webpack.config.js', './remotes/*/webpack.config.js'],
   packageJsons: ['./host/package.json', './remotes/*/package.json'],
-  rules: {
-    'eager-loading-heavy': { largePackages: ['react', 'react-dom'] }
-  }
 });
 
 console.log(report.summary);
