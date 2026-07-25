@@ -1,7 +1,8 @@
 import type { Report } from '../core/types';
+import { stripControlChars } from './sanitize';
 
 function escapeXmlAttr(value: string): string {
-  return value
+  return stripControlChars(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -10,7 +11,7 @@ function escapeXmlAttr(value: string): string {
 }
 
 function escapeXmlText(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return stripControlChars(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 export function junitReporter(report: Report): void {

@@ -5,6 +5,7 @@ import cac from 'cac';
 import picocolors from 'picocolors';
 import { analyze } from './core/analyze';
 import { loadConfig } from './core/config';
+import { shouldFailCi } from './core/ci-policy';
 import { loadRulesFromDir } from './rules';
 import { terminalReporter } from './reporters/terminal';
 import { jsonReporter } from './reporters/json';
@@ -26,7 +27,7 @@ interface AnalyzeCliOptions {
 }
 
 interface CiOptions {
-  'max-warnings'?: number;
+  maxWarnings?: number;
   format?: 'junit' | 'gh';
   rulesDir?: string;
   config?: string;
@@ -106,7 +107,7 @@ cli.command('ci', 'Run analysis in CI mode')
         junitReporter(report);
       }
 
-      if (report.summary.errors > 0 || report.summary.warnings > (options['max-warnings'] || 0)) {
+      if (shouldFailCi(report.summary, options.maxWarnings || 0)) {
         process.exit(1);
       }
     } catch (error) {

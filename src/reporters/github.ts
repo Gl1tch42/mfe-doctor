@@ -1,12 +1,15 @@
 import type { Report } from '../core/types';
+import { stripControlChars } from './sanitize';
 
 // Escaping rules per GitHub's workflow command format: https://github.com/actions/toolkit/blob/main/packages/core/src/command.ts
+// Control characters (e.g. ANSI escapes, which GitHub's log viewer renders) are
+// stripped first since they carry no legitimate meaning in a package name/path/version.
 function escapeData(value: string): string {
-  return value.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+  return stripControlChars(value).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
 }
 
 function escapeProperty(value: string): string {
-  return value
+  return stripControlChars(value)
     .replace(/%/g, '%25')
     .replace(/\r/g, '%0D')
     .replace(/\n/g, '%0A')

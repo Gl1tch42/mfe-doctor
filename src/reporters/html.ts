@@ -1,4 +1,5 @@
 import type { Report } from '../core/types';
+import { stripControlChars } from './sanitize';
 
 const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;',
@@ -9,7 +10,7 @@ const HTML_ESCAPES: Record<string, string> = {
 };
 
 function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+  return stripControlChars(value).replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
 }
 
 export function htmlReporter(report: Report): void {

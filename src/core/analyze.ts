@@ -15,11 +15,13 @@ export interface AnalyzeOptions {
   disable?: string[];
 }
 
+const DEFAULT_GLOB_IGNORE = ['**/node_modules/**', '**/.git/**'];
+
 export async function analyze(options: AnalyzeOptions): Promise<Report> {
   const configPaths: string[] = [];
   for (const pattern of options.configs) {
     if (pattern.includes('*') || pattern.includes('{') || pattern.includes('}')) {
-      const matches = await glob(pattern, { cwd: process.cwd() });
+      const matches = await glob(pattern, { cwd: process.cwd(), ignore: DEFAULT_GLOB_IGNORE });
       configPaths.push(...matches);
     } else {
       configPaths.push(pattern);
@@ -32,14 +34,14 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
 
   const configs: ParsedConfig[] = [];
   for (const configPath of configPaths) {
-    configs.push(await parseWebpackConfig(configPath));
+    configs.push(...(await parseWebpackConfig(configPath)));
   }
 
   const packageJsonPaths: string[] = [];
   if (options.packageJsons) {
     for (const pattern of options.packageJsons) {
       if (pattern.includes('*') || pattern.includes('{') || pattern.includes('}')) {
-        const matches = await glob(pattern, { cwd: process.cwd() });
+        const matches = await glob(pattern, { cwd: process.cwd(), ignore: DEFAULT_GLOB_IGNORE });
         packageJsonPaths.push(...matches);
       } else {
         packageJsonPaths.push(pattern);

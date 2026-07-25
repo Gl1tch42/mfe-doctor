@@ -131,13 +131,8 @@ function normalizeRemotes(remotesValue: unknown): ModuleFederationRemoteItem[] {
     }));
 }
 
-export function extractFederationConfig(ast: unknown, filePath: string): ParsedConfig {
-  let result: ParsedConfig = {
-    filePath,
-    exposes: [],
-    remotes: [],
-    shared: [],
-  };
+export function extractFederationConfig(ast: unknown, filePath: string): ParsedConfig[] {
+  const results: ParsedConfig[] = [];
 
   traverse(ast as t.File, {
     NewExpression(pathNode: NodePath<t.NewExpression>) {
@@ -152,17 +147,28 @@ export function extractFederationConfig(ast: unknown, filePath: string): ParsedC
       }
 
       const configObject = parseNode(firstArg) as Record<string, unknown>;
-      result = {
+      results.push({
         filePath,
         name: typeof configObject.name === 'string' ? configObject.name : undefined,
         exposes: normalizeExposes(configObject.exposes),
         remotes: normalizeRemotes(configObject.remotes),
         shared: normalizeShared(configObject.shared),
         raw: configObject,
-      };
-      pathNode.stop();
+      });
+      // Do not stop traversal: a single webpack config file can define
+      // multiple ModuleFederationPlugin instances (e.g. multi-compiler
+      // client+server builds, or an array of configs).
     },
   });
 
-  return result;
+  if (results.length === 0) {
+    results.push({
+      filePath,
+      exposes: [],
+      remotes: [],
+      shared: [],
+    });
+  }
+
+  return results;
 }

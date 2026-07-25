@@ -1,5 +1,6 @@
 import picocolors from 'picocolors';
 import type { Report } from '../core/types';
+import { sanitizeForTerminal } from './sanitize';
 
 const { green, red, yellow, cyan } = picocolors;
 
@@ -11,12 +12,15 @@ export function terminalReporter(report: Report): void {
 
   report.issues.forEach((issue) => {
     const severityColor = issue.severity === 'error' ? red : issue.severity === 'warning' ? yellow : cyan;
-    const location = issue.file ? `${issue.file}${issue.line ? `:${issue.line}` : ''}` : 'unknown location';
+    const file = issue.file ? sanitizeForTerminal(issue.file) : undefined;
+    const location = file ? `${file}${issue.line ? `:${issue.line}` : ''}` : 'unknown location';
+    const message = sanitizeForTerminal(issue.message);
+    const ruleId = sanitizeForTerminal(issue.ruleId);
 
-    console.log(severityColor(`${issue.severity.toUpperCase()} [${issue.ruleId}] ${issue.message}`));
+    console.log(severityColor(`${issue.severity.toUpperCase()} [${ruleId}] ${message}`));
     console.log(`  ${location}`);
     if (issue.suggestion) {
-      console.log(green(`  Suggestion: ${issue.suggestion}`));
+      console.log(green(`  Suggestion: ${sanitizeForTerminal(issue.suggestion)}`));
     }
     console.log('');
   });
