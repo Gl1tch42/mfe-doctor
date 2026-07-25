@@ -1,8 +1,8 @@
 # mfe-doctor
 
-[![npm version](https://badge.fury.io/js/mfe-doctor.svg)](https://badge.fury.io/js/mfe-doctor)
-[![Build Status](https://github.com/yourusername/mfe-doctor/workflows/CI/badge.svg)](https://github.com/yourusername/mfe-doctor/actions)
+[![npm version](https://badge.fury.io/js/mfe-doctor.svg)](https://www.npmjs.com/package/mfe-doctor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](package.json)
 
 Detect Module Federation misconfigurations before they hit production.
 
@@ -57,6 +57,15 @@ npx mfe-doctor analyze --json > report.json
 
 # HTML report with graphs
 npx mfe-doctor analyze --html > report.html
+
+# Disable specific rules
+npx mfe-doctor analyze --disable eager-loading-heavy,singleton-inconsistent
+
+# Load custom rules from a directory (.js/.mjs/.cjs files)
+npx mfe-doctor analyze --rules-dir ./mfe-doctor-rules
+
+# Use an explicit config file
+npx mfe-doctor analyze --config ./mfe-doctor.config.js
 ```
 
 ### CI Integration
@@ -65,12 +74,29 @@ npx mfe-doctor analyze --html > report.html
 # Fail on any errors, allow up to 5 warnings
 npx mfe-doctor ci --max-warnings 5
 
-# JUnit output for CI systems
+# JUnit output for CI systems (default format)
 npx mfe-doctor ci --format junit > test-results.xml
 
 # GitHub Actions annotations
 npx mfe-doctor ci --format gh
+
+# Combine with rule customization, same flags as `analyze`
+npx mfe-doctor ci --disable eager-loading-heavy --rules-dir ./mfe-doctor-rules
 ```
+
+`ci` fails the process (`exit 1`) when there is at least one error, or when the warning count exceeds `--max-warnings` (default `0`).
+
+#### CLI reference
+
+| Flag | Commands | Description |
+|------|----------|-------------|
+| `--json` | `analyze` | Print the report as JSON to stdout |
+| `--html` | `analyze` | Print a self-contained HTML report to stdout |
+| `--format <junit\|gh>` | `ci` | Output format for CI mode (default `junit`) |
+| `--max-warnings <n>` | `ci` | Warning threshold before the run fails (default `0`) |
+| `--rules-dir <dir>` | `analyze`, `ci` | Directory of custom rule files (`.js`, `.mjs`, `.cjs`) to load in addition to the built-in rules |
+| `--config <path>` | `analyze`, `ci` | Explicit path to `mfe-doctor.config.js` (see [Configuration File](#configuration-file)) |
+| `--disable <rules>` | `analyze`, `ci` | Comma-separated rule IDs to skip |
 
 ### Programmatic Usage
 
@@ -87,9 +113,30 @@ if (report.summary.errors > 0) {
 }
 ```
 
+### Configuration File
+
+Drop an `mfe-doctor.config.js` (`.mjs`/`.cjs`, or `.mfe-doctor.config.js`) in your project root to set defaults picked up automatically by both `analyze` and `ci` (or point at one explicitly with `--config`):
+
+```js
+// mfe-doctor.config.js
+import { defineConfig } from 'mfe-doctor';
+import myTeamRule from './rules/my-team-rule.js';
+
+export default defineConfig({
+  // Rule IDs to skip, same effect as --disable
+  disable: ['eager-loading-heavy'],
+  // Rule objects to register in addition to the built-ins
+  extraRules: [myTeamRule],
+});
+```
+
+CLI `--disable` flags are merged with (not replaced by) the config file's `disable` list.
+
 ### Custom Rules
 
-Extend mfe-doctor with your own rules:
+There are three ways to add a rule, in increasing order of reuse:
+
+1. **Programmatic API** — register a rule at runtime before calling `analyze`:
 
 ```ts
 import { analyze, ruleRegistry } from 'mfe-doctor';
@@ -116,16 +163,21 @@ const report = await analyze({
 });
 ```
 
+2. **`extraRules` in `mfe-doctor.config.js`** — see [Configuration File](#configuration-file) above, useful for rules committed to the repo.
+3. **`--rules-dir`** — point the CLI at a directory of standalone `.js`/`.mjs`/`.cjs` files, each with a `default` export matching the `Rule` shape (`id`, `meta`, `severity`, `check`). See [examples/custom-rule.js](examples/custom-rule.js) for a working example.
+
 ## Rules
 
-| Rule | Severity | Description |
-|------|----------|-------------|
-| expose-invalid-path | Error | Detects invalid expose paths that don't exist |
-| shared-not-installed | Error | Shared packages not listed in package.json |
-| required-version-missing | Warning | Missing requiredVersion or derivable version |
-| version-mismatch | Error | Conflicting versions across package.json files |
-| singleton-inconsistent | Warning | Inconsistent singleton configurations |
-| eager-loading-heavy | Warning | Eager loading that may increase bundle size |
+| Rule | Severity | Description | Docs |
+|------|----------|-------------|------|
+| expose-invalid-path | Error | Detects invalid expose paths that don't exist | [docs](docs/rules/expose-invalid-path.md) |
+| shared-not-installed | Error | Shared packages not listed in package.json | [docs](docs/rules/shared-not-installed.md) |
+| required-version-missing | Warning | Missing requiredVersion or derivable version | [docs](docs/rules/required-version-missing.md) |
+| version-mismatch | Error | Conflicting versions across package.json files | [docs](docs/rules/version-mismatch.md) |
+| singleton-inconsistent | Warning | Inconsistent singleton configurations | [docs](docs/rules/singleton-inconsistent.md) |
+| eager-loading-heavy | Warning | Eager loading that may increase bundle size | [docs](docs/rules/eager-loading-heavy.md) |
+
+Every rule can be turned off via `--disable` or the config file's `disable` list (see [CLI reference](#cli-reference) and [Configuration File](#configuration-file)).
 
 ### Example Output
 
@@ -153,23 +205,30 @@ Summary: 1 errors, 1 warnings, 0 infos
 
 ## Architecture
 
+See [docs/architecture.md](docs/architecture.md) for the full pipeline diagram and design principles.
+
 ```
 src/
-├── core/           # Analysis engine & types
-│   ├── analyze.ts  # Main analysis logic
-│   ├── parser.ts   # Webpack config parsing
-│   ├── extractor.ts# Module Federation extraction
-│   └── types.ts    # TypeScript definitions
-├── rules/          # Validation rules
-│   ├── index.ts    # Rule loader
-│   └── *.ts        # Individual rules
-├── reporters/      # Output formatters
-│   ├── terminal.ts # Colored console output
-│   ├── json.ts     # Structured JSON
-│   ├── html.ts     # Self-contained HTML report
-│   ├── junit.ts    # JUnit XML for CI
-│   └── github.ts   # GitHub Actions annotations
-└── cli.ts          # Command-line interface
+├── core/                  # Analysis engine & types
+│   ├── analyze.ts         # Main analysis logic
+│   ├── parser.ts          # Webpack config parsing
+│   ├── extractor.ts       # Module Federation extraction
+│   ├── graph.ts           # Builds the shared federation graph (host/remotes/shared)
+│   ├── config.ts          # mfe-doctor.config.js loading + defineConfig
+│   ├── ci-policy.ts       # Pass/fail decision for `ci`
+│   └── types.ts           # TypeScript definitions
+├── rules/                 # Validation rules
+│   ├── rule-interface.ts  # Rule contract + ruleRegistry
+│   ├── index.ts           # Built-in + --rules-dir loading
+│   └── *.ts               # Individual rules
+├── reporters/             # Output formatters
+│   ├── terminal.ts        # Colored console output
+│   ├── json.ts            # Structured JSON
+│   ├── html.ts            # Self-contained HTML report
+│   ├── junit.ts           # JUnit XML for CI
+│   ├── github.ts          # GitHub Actions annotations
+│   └── sanitize.ts        # Shared output-escaping helpers
+└── cli.ts                 # Command-line interface
 ```
 
 ### Key Technologies
@@ -265,4 +324,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)
