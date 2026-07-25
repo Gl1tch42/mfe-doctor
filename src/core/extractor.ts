@@ -1,25 +1,25 @@
 import traverseModule from '@babel/traverse';
 import type { NodePath } from '@babel/traverse';
+import type * as t from '@babel/types';
 import type { ModuleFederationExposeItem, ModuleFederationRemoteItem, ModuleFederationSharedItem, ParsedConfig } from './types';
 
-const traverse = (traverseModule as any).default ?? traverseModule;
+// ESM/CJS interop: @babel/traverse ships both formats
+const traverse = (traverseModule as { default?: typeof traverseModule }).default ?? traverseModule;
 
-function isModuleFederationPlugin(callee: any): boolean {
-  if (!callee) {
-    return false;
-  }
-
-  if (callee.type === 'Identifier' && callee.name === 'ModuleFederationPlugin') {
+function isModuleFederationPlugin(callee: t.Node): boolean {
+  if (callee.type === 'Identifier' && (callee as t.Identifier).name === 'ModuleFederationPlugin') {
     return true;
   }
 
-  if (callee.type === 'MemberExpression' && callee.property?.type === 'Identifier') {
-    return callee.property.name === 'ModuleFederationPlugin';
+  if (callee.type === 'MemberExpression') {
+    const prop = (callee as t.MemberExpression).property;
+    return prop.type === 'Identifier' && (prop as t.Identifier).name === 'ModuleFederationPlugin';
   }
 
   return false;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseNode(node: any): unknown {
   if (!node) {
     return undefined;
@@ -139,8 +139,8 @@ export function extractFederationConfig(ast: unknown, filePath: string): ParsedC
     shared: [],
   };
 
-  traverse(ast as any, {
-    NewExpression(pathNode: NodePath<any>) {
+  traverse(ast as t.File, {
+    NewExpression(pathNode: NodePath<t.NewExpression>) {
       const callee = pathNode.node.callee;
       if (!isModuleFederationPlugin(callee)) {
         return;

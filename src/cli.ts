@@ -54,7 +54,7 @@ cli.command('analyze [config]', 'Analyze Module Federation configs')
   .option('--config <path>', 'Path to mfe-doctor.config.js')
   .option('--disable <rules>', 'Comma-separated list of rule IDs to disable')
   .action(async (config: string | undefined, options: AnalyzeCliOptions) => {
-    const configs = config ? [config] : ['webpack.config.js', '**/webpack.config.js'];
+    const configs = config ? [config] : ['**/webpack.config.js'];
     try {
       const { extraRules, disable: configDisable } = await resolveExtraRules(options.rulesDir, options.config);
       const disable = [
@@ -63,7 +63,7 @@ cli.command('analyze [config]', 'Analyze Module Federation configs')
       ];
       const report = await analyze({
         configs,
-        packageJsons: ['package.json', '**/package.json'],
+        packageJsons: ['**/package.json'],
         extraRules,
         disable,
       });
@@ -94,8 +94,8 @@ cli.command('ci', 'Run analysis in CI mode')
         ...(options.disable ? options.disable.split(',').map((s) => s.trim()) : []),
       ];
       const report = await analyze({
-        configs: ['webpack.config.js', '**/webpack.config.js'],
-        packageJsons: ['package.json', '**/package.json'],
+        configs: ['**/webpack.config.js'],
+        packageJsons: ['**/package.json'],
         extraRules,
         disable,
       });

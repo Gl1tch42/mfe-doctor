@@ -26,6 +26,10 @@ export async function analyze(options: AnalyzeOptions): Promise<Report> {
     }
   }
 
+  if (configPaths.length === 0) {
+    console.warn('[mfe-doctor] No webpack config files found. Check that the paths or glob patterns are correct.');
+  }
+
   const configs: ParsedConfig[] = [];
   for (const configPath of configPaths) {
     configs.push(await parseWebpackConfig(configPath));

@@ -10,6 +10,15 @@
     "linter"
   ],
   "license": "MIT",
+  "author": "Jean Carvalho",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gl1tch42/mfe-doctor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Gl1tch42/mfe-doctor/issues"
+  },
+  "homepage": "https://github.com/Gl1tch42/mfe-doctor#readme",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -22,7 +31,7 @@
     }
   },
   "bin": {
-    "mfe-doctor": "./dist/cli.js"
+    "mfe-doctor": "dist/cli.js"
   },
   "files": [
     "dist",

@@ -20,8 +20,8 @@ export function buildFederationGraph(configs: ParsedConfig[]): FederationGraph {
   }
 
   return {
-    host: configs.length > 0 ? configs[0] : undefined,
-    remotes: configs,
+    host: configs.find((c) => c.remotes.length > 0),
+    remotes: configs.filter((c) => c.exposes.length > 0),
     sharedPackages,
   };
 }

@@ -46,7 +46,7 @@ npm install --save-dev mfe-doctor
 ### Analyze Your Project
 
 ```bash
-# Basic analysis (finds webpack.config.js automatically)
+# Basic analysis (recursively finds every webpack.config.js under the cwd)
 npx mfe-doctor analyze
 
 # Analyze specific config
@@ -140,6 +140,10 @@ WARNING [version-mismatch] Shared package 'react' has conflicting versions: 17.0
 
 Summary: 1 errors, 1 warnings, 0 infos
 ```
+
+### Known Limitations
+
+- **`expose-invalid-path` does not resolve extensions.** Unlike webpack's module resolution, this rule checks the `exposes` path literally with `fs.access` — it does not try `.ts`, `.tsx`, `.js`, etc. If your `ModuleFederationPlugin` config omits the extension (e.g. `'./Button': './src/Button'`, common in real-world configs), the rule will report a false positive unless the exact literal path exists on disk. Write extension-less exposes with the real extension included, or expect this rule to flag them.
 
 ## Architecture
 

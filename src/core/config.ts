@@ -20,8 +20,11 @@ export async function loadConfig(cwd = process.cwd()): Promise<MfeDoctorConfig> 
     try {
       const mod = await import(pathToFileURL(filePath).href);
       return (mod?.default ?? mod) as MfeDoctorConfig;
-    } catch {
-      // file not found or invalid, try next
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== 'ENOENT' && code !== 'MODULE_NOT_FOUND') {
+        console.warn(`[mfe-doctor] Failed to load config file "${filename}": ${(error as Error).message}`);
+      }
     }
   }
   return {};
