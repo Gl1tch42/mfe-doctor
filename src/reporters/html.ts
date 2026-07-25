@@ -1,5 +1,17 @@
 import type { Report } from '../core/types';
 
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
 export function htmlReporter(report: Report): void {
   const html = `
 <!DOCTYPE html>
@@ -31,15 +43,15 @@ export function htmlReporter(report: Report): void {
     <h2>Issues</h2>
     ${report.issues.length === 0 ? '<p>No issues found</p>' : report.issues.map(issue => `
         <div class="issue ${issue.severity}">
-            <h3>${issue.severity.toUpperCase()} [${issue.ruleId}]</h3>
-            <p>${issue.message}</p>
-            <p><strong>File:</strong> ${issue.file || 'unknown'}</p>
-            ${issue.suggestion ? `<p class="suggestion">Suggestion: ${issue.suggestion}</p>` : ''}
+            <h3>${escapeHtml(issue.severity.toUpperCase())} [${escapeHtml(issue.ruleId)}]</h3>
+            <p>${escapeHtml(issue.message)}</p>
+            <p><strong>File:</strong> ${escapeHtml(issue.file || 'unknown')}</p>
+            ${issue.suggestion ? `<p class="suggestion">Suggestion: ${escapeHtml(issue.suggestion)}</p>` : ''}
         </div>
     `).join('')}
 
     <h2>Graph</h2>
-    <pre>${JSON.stringify(report.graph, null, 2)}</pre>
+    <pre>${escapeHtml(JSON.stringify(report.graph, null, 2))}</pre>
 </body>
 </html>`;
 

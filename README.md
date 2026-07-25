@@ -145,6 +145,11 @@ Summary: 1 errors, 1 warnings, 0 infos
 
 - **`expose-invalid-path` does not resolve extensions.** Unlike webpack's module resolution, this rule checks the `exposes` path literally with `fs.access` — it does not try `.ts`, `.tsx`, `.js`, etc. If your `ModuleFederationPlugin` config omits the extension (e.g. `'./Button': './src/Button'`, common in real-world configs), the rule will report a false positive unless the exact literal path exists on disk. Write extension-less exposes with the real extension included, or expect this rule to flag them.
 
+### Security
+
+- **Reporter output is escaped.** Package names, versions, and paths extracted from the analyzed `webpack.config.js`/`package.json` are attacker-controlled input when you run `mfe-doctor` against a repo you don't fully trust (e.g. an external PR in CI). The `html`, `junit`, and `gh` (GitHub Actions annotations) reporters escape this data for their respective output format, so a malicious package name can't inject HTML/JS into a report, break a JUnit XML parser, or forge extra `::error::`/`::warning::` annotations in your Actions run.
+- **Config and rule loading execute arbitrary code, by design.** `mfe-doctor.config.js` and any file under `--rules-dir` are `import()`-ed and run as JavaScript, the same trust model as `eslint.config.js` or `jest.config.js`. Only point `--rules-dir` at rules you've reviewed, and don't run `mfe-doctor` with a repo-supplied config against untrusted checkouts (e.g. PRs from forks) unless you've reviewed that config first.
+
 ## Architecture
 
 ```
