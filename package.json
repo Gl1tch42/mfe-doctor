@@ -1,6 +1,6 @@
 {
   "name": "mfe-doctor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Detect Module Federation misconfigurations before they hit production",
   "keywords": [
     "module-federation",
