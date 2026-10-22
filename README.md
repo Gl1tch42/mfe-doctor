@@ -309,14 +309,6 @@ new ModuleFederationPlugin({
 })
 ```
 
-## Roadmap
-
-- [ ] **Dependency Graph Visualization**: `mfe-doctor graph` command
-- [ ] **Rule Engine Plugins**: Custom rules via npm packages
-- [ ] **Ownership Analysis**: Track which teams own which modules
-- [ ] **Performance Metrics**: Bundle size impact analysis
-- [ ] **GitHub Action Official**: `uses: mfe-doctor/action@v1`
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
