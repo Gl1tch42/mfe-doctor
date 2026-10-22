@@ -19,11 +19,10 @@ Micro Frontends with Module Federation frequently fail in production because of:
 
 `mfe-doctor` catches these problems **before deployment**, preventing costly production outages in enterprise-scale micro frontend architectures.
 
-### Real-World Impact
+### Real focus
 
-Used by teams at:
-- Large fintech companies managing 20+ MFEs
-- Enterprise banks with complex webpack monorepos
+- companies managing 20+ MFEs
+- Enterprise with complex webpack monorepos
 - Development teams using Nx, Angular, or React Module Federation
 
 ## What It Does
